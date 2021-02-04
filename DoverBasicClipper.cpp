@@ -69,7 +69,7 @@ DoverBasicClipper::DoverBasicClipper(const InstanceInfo& info)
 #if IPLUG_DSP
 void DoverBasicClipper::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
 {
-  const double gain = GetParam(kGain)->Value() / 50.;
+  const double gain = GetParam(kGain)->Value() / 5.;
   const double post = GetParam(kPost)->Value() / 50.;
   const double clip = GetParam(kClip)->Value() / 100.;
   double sample = 0.f;
@@ -79,7 +79,31 @@ void DoverBasicClipper::ProcessBlock(sample** inputs, sample** outputs, int nFra
   mMeterSender.ProcessBlock(outputs, nFrames, kCtrlTagMeter);
   for (int s = 0; s < nFrames; s++) {
     for (int c = 0; c < nChans; c++) {
-      if (inputs[c][s] > 0) {
+
+      cursample = inputs[c][s] * gain;
+      if (abs(cursample) > clip) {
+        //sample = 0.5 * (abs(cursample + clip) - abs(cursample - clip));
+
+        //sample = (sample>0?1.5 * sample - 0.5 * sample * sample * sample: 1.5 * sample + 0.5 * sample * sample * sample);
+        //sample = 1.5 * sample - 0.5 * sample * sample * sample;
+       // if (cursample > 0) {
+       //   sample = (cursample - (pow(cursample, 3) / 3));
+      ///  }
+      //  else {
+      //    sample = -((-cursample) - (pow(-cursample, 3) / 3));
+      //  }
+        
+          if (cursample >= clip)
+            sample = sin(clip + ((clip) * (sin(cursample))) * .5) ;
+          else if (cursample <= (-clip))
+            sample = sin(-clip + ((0 - clip) * (sin(-cursample))) * .5) ;
+          else if (cursample == 0)
+            sample = cursample ;
+      }
+      else(sample = cursample);
+
+
+      /*if (inputs[c][s] > 0) {
         cursample = inputs[c][s];
 
       }
@@ -98,8 +122,9 @@ void DoverBasicClipper::ProcessBlock(sample** inputs, sample** outputs, int nFra
       if (inputs[c][s] < 0)
       {
         sample = -sample;
-      }
-      outputs[c][s] = sample;
+      }*/
+      
+      outputs[c][s] = sample * post;
 
     }
   }
